@@ -118,13 +118,17 @@ private:
         return query_words;                                                     // Возвращаем обработанный поисковой запрос
     }
 
+    double FindWordIDF(const int& count_word) const {                           // Функция вычисления IDF для слов запроса
+        return log(static_cast<double>(document_count_) / count_word);
+    }
+
     vector<Document> FindAllDocuments(const Query& query_words) const {         // Метод ищет документы по текстовому запросу
         map<int, double> document_to_relevance;                                 // Храним id и релевантности TF-IDF найденных док-тов
         for (const string& p_word : query_words.plus_words) {                   // Проходим по всем плюс-словам из запроса
             if (word_in_document_freqs_.count(p_word) == 0) {                   // В документе может не быть слова из запроса
                 continue;
             }
-            const double word_IDF = log(double(document_count_) / word_in_document_freqs_.at(p_word).size()); // Получаем IDF слова из запроса 
+            const double word_IDF = FindWordIDF(word_in_document_freqs_.at(p_word).size()); // Получаем значение IDF слова из запроса 
             for (const auto& [doc_id, word_TF] : word_in_document_freqs_.at(p_word)) {
                 document_to_relevance[doc_id] += word_TF * word_IDF;            // Накапливаем значение релевантности по TF-IDF для док-та
             }

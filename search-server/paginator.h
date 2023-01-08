@@ -28,6 +28,13 @@ template <typename Iterator>
 class Paginator {
 public:
     Paginator<Iterator> (const Iterator& it_page_begin, const Iterator& it_page_end, size_t page_size) {
+        if (page_size < 1) {
+            throw std::invalid_argument("Page size cannot be smaller than 1");
+        }
+        if (it_page_end <= it_page_begin) {
+            throw std::invalid_argument("Pagination error");
+        }
+
         // Узнаем на скольких страницах поместятся все запросы
         size_t number_of_pages = ceil((distance(
             it_page_begin, it_page_end) / static_cast<double>(page_size)));

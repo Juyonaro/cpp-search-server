@@ -14,6 +14,7 @@
 using std::literals::string_literals::operator""s;
 
 const int MAX_RESULT_DOCUMENT_COUNT = 5;
+constexpr double accuracy = 1e-6;
 
 class SearchServer {
 public:
@@ -42,7 +43,7 @@ public:
 
         sort(matched_documents.begin(), matched_documents.end(),
             [](const Document& lhs, const Document& rhs) {
-                if (std::abs(lhs.relevance - rhs.relevance) < 1e-6) {
+                if (std::abs(lhs.relevance - rhs.relevance) < accuracy) {
                     return lhs.rating > rhs.rating;
                 } else {
                     return lhs.relevance > rhs.relevance;

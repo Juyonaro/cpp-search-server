@@ -8,7 +8,7 @@
 using std::literals::string_literals::operator""s;
 
 void SearchServer::AddDocument(int document_id, const std::string& document,
-                               DocumentStatus status, const std::vector<int>& ratings)
+    DocumentStatus status, const std::vector<int>& ratings)
 {
     // Првоерка на спец.символы в док-те
     if (!IsValidWord(document)) {
@@ -28,11 +28,21 @@ void SearchServer::AddDocument(int document_id, const std::string& document,
     const double inv_word_count = 1.0 / words.size();
     for (const std::string& word : words) {
         word_to_document_freqs_[word][document_id] += inv_word_count;
+        document_to_word_freqs_[document_id][word] += inv_word_count;
     }
     // Сохраняем док-т в системе
     documents_.emplace(document_id, DocumentData{ ComputeAverageRating(ratings), status });
     // Сохраняем ID док-та
-    document_ids_.push_back(document_id);
+    document_ids_.emplace(document_id);
+}
+
+void SearchServer::RemoveDocument(int document_id) {
+    for (auto [word, _] : document_to_word_freqs_.at(document_id)) {
+        word_to_document_freqs_.at(word).erase(document_id);
+    }
+    document_to_word_freqs_.erase(document_id);
+    document_ids_.erase(document_id);
+    documents_.erase(document_id);
 }
 
 std::tuple<std::vector<std::string>, DocumentStatus> SearchServer::MatchDocument(
@@ -64,9 +74,17 @@ std::tuple<std::vector<std::string>, DocumentStatus> SearchServer::MatchDocument
     return {matched_words, documents_.at(document_id).status};
 }
 
-int SearchServer::GetDocumentId(int index) const {
-    return document_ids_.at(index);
+// Метод получения частот слов по ID документа
+const std::map<std::string, double>& SearchServer::GetWordFrequencies(int document_id) const {
+    if (document_to_word_freqs_.count(document_id)) {
+        return document_to_word_freqs_.at(document_id);
+    } else { // Если док-та не существует, возвращаем ссылку на пустой контейнер
+        //return std::map<std::string, double>();
+        static const std::map<std::string, double> tmp;
+        return tmp;
+    }
 }
+
 size_t SearchServer::GetDocumentCount() const {
     return documents_.size();
 }
@@ -134,4 +152,14 @@ SearchServer::Query SearchServer::ParseQuery(const std::string& raw_query) const
     }
     
     return query;
+}
+
+
+//
+
+
+void AddDocument(SearchServer& search_server, int document_id,
+    const std::string& document, DocumentStatus status, const std::vector<int>& ratings)
+{
+    search_server.AddDocument(document_id, document, status, ratings);
 }

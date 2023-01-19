@@ -33,6 +33,8 @@ public:
     void AddDocument(int document_id, const std::string& document,
                      DocumentStatus status, const std::vector<int>& ratings);
     
+    void RemoveDocument(int document_id);
+    
     template <typename DocumentPredicate>
     std::vector<Document> FindTopDocuments(
         const std::string& raw_query, DocumentPredicate document_predicate) const
@@ -74,8 +76,17 @@ public:
     std::tuple<std::vector<std::string>, DocumentStatus> MatchDocument(
         const std::string& raw_query, int document_id) const;
 
-    int GetDocumentId(int index) const;
+    // Метод получения частот слов по ID документа
+    const std::map<std::string, double>& GetWordFrequencies(int document_id) const;
+    
     size_t GetDocumentCount() const;
+    
+    std::set<int>::const_iterator begin() const {
+        return document_ids_.begin();
+    }
+    std::set<int>::const_iterator end() const {
+        return document_ids_.end();
+    }
     
 private:
     struct DocumentData {
@@ -83,12 +94,14 @@ private:
         DocumentStatus status;
     };
     const std::set<std::string> stop_words_;
-    // Слово = Документ - TF
+    // Слово, Документ - TF
     std::map<std::string, std::map<int, double>> word_to_document_freqs_;
-    // Документ = Рейтинг - Статус
+    // Частота слов по ID док-та
+    std::map<int, std::map<std::string, double>> document_to_word_freqs_;
+    // Документ, Рейтинг - Статус
     std::map<int, DocumentData> documents_;
-    // Порядковый индекс = ID док-та
-    std::vector<int> document_ids_;
+    // Порядковый номер ~ ID док-та
+    std::set<int> document_ids_;
     
     struct QueryWord {
         std::string data;
@@ -150,3 +163,10 @@ private:
         return matched_documents;
     }
 };
+
+
+// 
+
+
+void AddDocument(SearchServer& search_server, int document_id,
+    const std::string& document, DocumentStatus status, const std::vector<int>& ratings);

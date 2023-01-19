@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
-#include <iostream>
 
 using std::literals::string_literals::operator""s;
 

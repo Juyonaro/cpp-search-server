@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <numeric>
+#include <iostream>
 
 using std::literals::string_literals::operator""s;
 
@@ -37,6 +38,10 @@ void SearchServer::AddDocument(int document_id, const std::string& document,
 }
 
 void SearchServer::RemoveDocument(int document_id) {
+    if (documents_.count(document_id) == 0) {
+        throw std::invalid_argument("Document ID does not exist"s);
+    }
+    
     for (auto [word, _] : document_to_word_freqs_.at(document_id)) {
         word_to_document_freqs_.at(word).erase(document_id);
     }
@@ -44,6 +49,19 @@ void SearchServer::RemoveDocument(int document_id) {
     document_ids_.erase(document_id);
     documents_.erase(document_id);
 }
+
+std::vector<Document> SearchServer::FindTopDocuments(
+        const std::string& raw_query, DocumentStatus status) const
+    {
+        return SearchServer::FindTopDocuments(
+            raw_query, [status](int document_id, DocumentStatus doc_status, int rating)
+            { return status == doc_status; }
+        );
+    }
+    
+    std::vector<Document> SearchServer::FindTopDocuments(const std::string& raw_query) const {
+        return FindTopDocuments(raw_query, DocumentStatus::ACTUAL);
+    }
 
 std::tuple<std::vector<std::string>, DocumentStatus> SearchServer::MatchDocument(
     const std::string& raw_query, int document_id) const
@@ -79,7 +97,6 @@ const std::map<std::string, double>& SearchServer::GetWordFrequencies(int docume
     if (document_to_word_freqs_.count(document_id)) {
         return document_to_word_freqs_.at(document_id);
     } else { // Если док-та не существует, возвращаем ссылку на пустой контейнер
-        //return std::map<std::string, double>();
         static const std::map<std::string, double> tmp;
         return tmp;
     }
@@ -92,6 +109,7 @@ size_t SearchServer::GetDocumentCount() const {
 bool SearchServer::IsStopWord(const std::string& word) const {
     return stop_words_.count(word) > 0;
 }
+
 bool SearchServer::IsValidWord(const std::string& word) {
     return none_of(word.begin(), word.end(), [](char c)
         { return c >= '\0' && c < ' '; }
@@ -117,6 +135,7 @@ int SearchServer::ComputeAverageRating(const std::vector<int>& ratings) {
     
     return rating_sum / static_cast<int>(ratings.size());
 }
+
 double SearchServer::ComputeWordInverseDocumentFreq(const std::string& word) const {
     return std::log(documents_.size() * 1.0 / word_to_document_freqs_.at(word).size());
 }
@@ -138,6 +157,7 @@ SearchServer::QueryWord SearchServer::ParseQueryWord(std::string text) const {
 
     return {word, is_minus, IsStopWord(word)};
 }
+
 SearchServer::Query SearchServer::ParseQuery(const std::string& raw_query) const {
     Query query;
     for (const std::string& word : SplitIntoWords(raw_query)) {

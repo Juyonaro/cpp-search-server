@@ -3,6 +3,17 @@
 RequestQueue::RequestQueue(const SearchServer& search_server)
     : search_server_(search_server) {}
 
+std::vector<Document> RequestQueue::AddFindRequest(const std::string& raw_query, DocumentStatus status) {
+    return AddFindRequest(raw_query,
+                          [status](int document_id, DocumentStatus doc_status, int rating) {
+                              return status == doc_status;
+                          });
+}
+
+std::vector<Document> RequestQueue::AddFindRequest(const std::string& raw_query) {
+    return AddFindRequest(raw_query, DocumentStatus::ACTUAL);
+}
+
 int RequestQueue::GetNoResultRequests() const {
     return unprocessed_requests_;
 }
